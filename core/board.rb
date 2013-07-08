@@ -1,84 +1,81 @@
 class Board
-  # horizontal
-  # (0,0, 0,1, 0,2)
-  # (1,0, 1,1, 1,2)
-  # (2,0, 2,1, 2,2)
-  # vertical
-  # (0,0, 1,0, 2,0)
-  # (
-  # (0,0, 1,1, 2,2)
-  #
   VALID_MARKS = ['X', 'O']
-  protected
-  def check_winner(prev, box)
-    prev = box if prev == ''
-    winner = (box == prev and box != '')
-    return winner
-  end
-  
+
+  private
+  attr_accessor :board, :board_size, :complete
+
   public
-  def initialize(board_size=3)
-    @board = []
-    x = 0
-    while x < board_size
-      row, y = [], 0
-      while y < board_size
-        row << ''
-        y += 1
-      end
-      @board << row
-      x += 1
+  def initialize(board_size=3, value='')
+    @board = Array.new(board_size)
+    (0...board_size).each do |y|
+      @board[y] = Array.new(board_size)
+      (0...board_size).each {|x| @board[y][x] = value.clone}
     end
     
     @complete = false
+    @board_size = board_size
   end
 
+  def cols
+    @board.transpose
+  end
+
+  def diagonals
+    ret = []
+    # top-left to bottom-right
+    x, y = 0, 0
+    item = []
+    while y < @board_size
+      item << @board[x][y]
+      x += 1
+      y += 1
+    end
+    ret << item
+
+    # top-right to bottom-left
+    x, y = 2, 0
+    item = []
+    while y < @board_size
+      item << @board[x][y]
+      x -= 1
+      y += 1
+    end
+    ret << item
+    ret
+  end
+  
+  
   def has_winner?
     # check horizontals
     winner = false
-    @board.each do |row|
-      prev = ''
-      row.each do |box|
-        winner = check_winner(prev, box)
+    prev = nil
+    [@board, cols, diagonals].each do |layout|
+      layout.each do |row|
+        prev = nil
+        row.each do |box|
+          winner = (prev == box and not box.nil?)
+          prev = box
+        end
+        break if winner
       end
       break if winner
     end
-    return winner if winner
-
-    # check verticals
-    x, = 0
-    while x <= @board.length
-      prev = ''
-      y = 0
-      while y <= @board[x].length
-        box = @board[x][y]
-        winner = check_winner(prev, box)
-        y += 1
-      end
-      break if winner
-      x += 1
-    end
-    return winner if winner
-        
+    winner
   end
 
   def set_mark!(x, y, mark)
-    if x > @board[0].length or y > @board.length
-      raise Exception
-    end
+    raise "Coordinates out of bounds!" unless x < @board_size and y < @board_size
+    raise "Invalid mark type!" unless VALID_MARKS.include? mark or mark.kind_of?(Board)
 
-    unless VALID_MARKS.include? mark
-      raise Exception
-    end
-    @board[x][y] = mark
+    @board[y][x] = mark
   end
 
   def get_mark(x, y)
-    if x > @board[0].length or y > @board.length
-      raise Exception
-    end
-    @board[x][y]
+    raise "Coordinates out of bounds!" unless x < @board_size and y < @board_size
+    @board[y][x]
   end
+
+
 end
 
       
